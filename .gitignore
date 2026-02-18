@@ -1,0 +1,30 @@
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Environment/local
+.venv/
+venv/
+env/
+.python-version
+
+# IDE
+.vscode/
+.idea/
+
+# Data + generated artifacts
+data/
+processed_landmarks/
+dataset/
+
+# Models/cache
+models/*.h5
+models/*.keras
+models/training_history.json
+
+# Logs/reports
+*.log

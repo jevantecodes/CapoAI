@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CapoAI Move Classifier</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <div class="bg-shape shape-a"></div>
+  <div class="bg-shape shape-b"></div>
+
+  <main class="page">
+    <section class="hero">
+      <p class="eyebrow">Computer Vision</p>
+      <h1>CapoAI Move Classifier</h1>
+      <p class="sub">
+        Upload a capoeira video and run inference with your trained pose model.
+      </p>
+      <div id="move-chips" class="chips" aria-live="polite"></div>
+    </section>
+
+    <section class="panel">
+      <form id="predict-form" class="uploader">
+        <label for="video-input" id="drop-zone" class="drop-zone">
+          <span class="drop-zone-title">Drop video here or click to browse</span>
+          <span class="drop-zone-hint">Accepted: .mp4, .mov, .avi, .mkv, .webm</span>
+        </label>
+        <input id="video-input" name="video" type="file" accept="video/*" required>
+        <div class="actions">
+          <span id="file-name" class="file-name">No video selected</span>
+          <button id="submit-btn" type="submit">Analyze Move</button>
+        </div>
+        <div class="segment-controls">
+          <div class="segment-field">
+            <label for="start-time">Start (sec)</label>
+            <input id="start-time" type="number" min="0" step="0.1" placeholder="0.0">
+            <button id="set-start" type="button" class="ghost-btn">Use current frame</button>
+          </div>
+          <div class="segment-field">
+            <label for="end-time">End (sec)</label>
+            <input id="end-time" type="number" min="0" step="0.1" placeholder="leave blank = full clip">
+            <button id="set-end" type="button" class="ghost-btn">Use current frame</button>
+          </div>
+        </div>
+      </form>
+
+      <div class="preview-grid">
+        <article class="card">
+          <h2>Preview</h2>
+          <video id="video-preview" controls muted playsinline></video>
+        </article>
+        <article class="card">
+          <h2>Prediction</h2>
+          <p id="status" class="status">Waiting for upload...</p>
+          <div class="result-row">
+            <span>Top Move</span>
+            <strong id="predicted-move">-</strong>
+          </div>
+          <div class="result-row">
+            <span>Confidence</span>
+            <strong id="predicted-confidence">-</strong>
+          </div>
+          <div class="result-row">
+            <span>Detected Frames</span>
+            <strong id="detected-frames">-</strong>
+          </div>
+          <div class="result-row">
+            <span>Selected Segment</span>
+            <strong id="selected-segment">-</strong>
+          </div>
+          <div class="result-row">
+            <span>Best Window</span>
+            <strong id="best-window">-</strong>
+          </div>
+          <div class="result-row">
+            <span>Windows Tested</span>
+            <strong id="windows-tested">-</strong>
+          </div>
+          <div id="probabilities" class="bars"></div>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <div id="training-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="training-modal-title">
+    <div class="modal-card">
+      <h2 id="training-modal-title">Save Clip as Training Data</h2>
+      <p class="modal-note">
+        Review the selected segment below. Only this start/end clip will be saved.
+      </p>
+      <video id="training-preview" controls muted playsinline></video>
+      <div class="modal-grid">
+        <div class="segment-field">
+          <label for="training-start">Clip Start (sec)</label>
+          <input id="training-start" type="number" min="0" step="0.1">
+        </div>
+        <div class="segment-field">
+          <label for="training-end">Clip End (sec)</label>
+          <input id="training-end" type="number" min="0" step="0.1">
+        </div>
+      </div>
+      <div class="result-row">
+        <span>Model Predicted</span>
+        <strong id="training-predicted">-</strong>
+      </div>
+      <div class="result-row">
+        <span>Confidence</span>
+        <strong id="training-confidence">-</strong>
+      </div>
+      <div class="segment-field">
+        <label for="actual-move">Actual Move Label</label>
+        <select id="actual-move"></select>
+      </div>
+      <label class="check-row">
+        <input id="model-correct" type="checkbox">
+        Model got it right
+      </label>
+      <div class="modal-actions">
+        <button id="cancel-training" type="button" class="ghost-btn">Skip Save</button>
+        <button id="confirm-training" type="button">Send Clip to Training Data</button>
+      </div>
+    </div>
+  </div>
+  <script src="/static/app.js"></script>
+</body>
+</html>

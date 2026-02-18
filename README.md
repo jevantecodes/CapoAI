@@ -99,3 +99,4 @@ API endpoints:
 
 - Single video prediction: `python 05_predict_move.py`
 - Real-time webcam inference: `python 06_realtime_feedback.py`
+# CapoAI

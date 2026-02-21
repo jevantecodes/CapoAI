@@ -185,6 +185,14 @@ h1 {
   box-shadow: 0 0 0 2px rgba(208, 85, 42, 0.13);
 }
 
+.select-input {
+  border: 1px solid #decdc0;
+  border-radius: 9px;
+  padding: 8px 10px;
+  font-size: 0.9rem;
+  background: #fff;
+}
+
 .ghost-btn {
   background: #fff3ea;
   border: 1px solid #e6c8b2;
@@ -234,6 +242,13 @@ button:disabled {
   grid-template-columns: 1fr 1fr;
 }
 
+.analytics-grid {
+  margin-top: 14px;
+  display: grid;
+  gap: 14px;
+  grid-template-columns: 1fr 1fr;
+}
+
 .card {
   border: 1px solid var(--line);
   border-radius: 14px;
@@ -253,6 +268,15 @@ button:disabled {
   border: 1px solid #ecd9cb;
   background: #f6efe9;
   min-height: 220px;
+}
+
+#live-video {
+  width: 100%;
+  border-radius: 10px;
+  border: 1px solid #ecd9cb;
+  background: #f6efe9;
+  min-height: 220px;
+  margin-bottom: 10px;
 }
 
 .status {
@@ -299,6 +323,32 @@ button:disabled {
   border-radius: inherit;
   background: linear-gradient(90deg, #f4b08e 0%, #d0552a 100%);
   transition: width 0.4s ease;
+}
+
+.benchmark-table {
+  margin-top: 8px;
+  display: grid;
+  gap: 6px;
+}
+
+.benchmark-row {
+  display: grid;
+  grid-template-columns: 1.6fr 0.7fr 0.8fr 0.8fr 0.9fr;
+  gap: 8px;
+  font-size: 0.85rem;
+  border: 1px solid #ead7c9;
+  background: #fffaf6;
+  border-radius: 8px;
+  padding: 7px 9px;
+}
+
+.benchmark-row span {
+  overflow-wrap: anywhere;
+}
+
+.benchmark-head {
+  font-weight: 700;
+  background: #fff1e4;
 }
 
 .modal-backdrop {
@@ -394,6 +444,10 @@ button:disabled {
   }
 
   .preview-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .analytics-grid {
     grid-template-columns: 1fr;
   }
 }

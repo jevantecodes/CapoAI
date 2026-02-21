@@ -28,3 +28,6 @@ models/training_history.json
 
 # Logs/reports
 *.log
+
+data_info2.pub
+data_info1

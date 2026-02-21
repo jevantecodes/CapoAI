@@ -31,6 +31,11 @@
           <span id="file-name" class="file-name">No video selected</span>
           <button id="submit-btn" type="submit">Analyze Move</button>
         </div>
+        <div class="actions">
+          <label for="model-select" class="file-name">Model</label>
+          <select id="model-select" class="select-input"></select>
+          <button id="refresh-benchmark" type="button" class="ghost-btn">Refresh Model Analysis</button>
+        </div>
         <div class="segment-controls">
           <div class="segment-field">
             <label for="start-time">Start (sec)</label>
@@ -62,6 +67,10 @@
             <strong id="predicted-confidence">-</strong>
           </div>
           <div class="result-row">
+            <span>Model Used</span>
+            <strong id="predicted-model">-</strong>
+          </div>
+          <div class="result-row">
             <span>Detected Frames</span>
             <strong id="detected-frames">-</strong>
           </div>
@@ -78,6 +87,35 @@
             <strong id="windows-tested">-</strong>
           </div>
           <div id="probabilities" class="bars"></div>
+        </article>
+      </div>
+
+      <div class="analytics-grid">
+        <article class="card">
+          <h2>Model Analysis</h2>
+          <p id="benchmark-status" class="status">No benchmark loaded.</p>
+          <div class="result-row">
+            <span>Best Model</span>
+            <strong id="benchmark-best">-</strong>
+          </div>
+          <div id="benchmark-table" class="benchmark-table"></div>
+        </article>
+        <article class="card">
+          <h2>Live Stream</h2>
+          <p id="live-status" class="status">Camera is off.</p>
+          <video id="live-video" autoplay muted playsinline></video>
+          <div class="actions">
+            <button id="start-live" type="button">Start Live Detection</button>
+            <button id="stop-live" type="button" class="ghost-btn">Stop</button>
+          </div>
+          <div class="result-row">
+            <span>Current Move</span>
+            <strong id="live-move">-</strong>
+          </div>
+          <div class="result-row">
+            <span>Confidence</span>
+            <strong id="live-confidence">-</strong>
+          </div>
         </article>
       </div>
     </section>

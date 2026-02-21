@@ -25,6 +25,7 @@ ALLOWED_EXTENSIONS = {".mp4", ".mov", ".avi", ".mkv", ".webm"}
 DATA_ROOT = BASE_DIR / "data"
 PROCESSED_ROOT = BASE_DIR / "processed_landmarks"
 TRAINING_LOG = DATA_ROOT / "training_feedback.jsonl"
+BENCHMARK_PATH = BASE_DIR / "models" / "model_benchmark.json"
 
 app = Flask(
     __name__,
@@ -120,6 +121,7 @@ def health():
         {
             "ok": True,
             "model_path": str(service.model_path.relative_to(BASE_DIR)),
+            "default_model_id": service.default_model_id,
             "sequence_length": service.sequence_length,
             "labels": service.labels,
         }
@@ -129,6 +131,30 @@ def health():
 @app.get("/api/moves")
 def moves():
     return jsonify({"moves": service.labels})
+
+
+@app.get("/api/models")
+def models():
+    return jsonify(
+        {
+            "default_model_id": service.default_model_id,
+            "models": service.get_available_models(),
+        }
+    )
+
+
+@app.get("/api/model-benchmark")
+def model_benchmark():
+    if not BENCHMARK_PATH.exists():
+        return jsonify({"error": "No benchmark found. Run 08_compare_models.py first."}), 404
+    try:
+        with BENCHMARK_PATH.open("r", encoding="utf-8") as f:
+            data = json.load(f)
+    except Exception as exc:
+        return jsonify({"error": f"Could not read benchmark file: {exc}"}), 500
+    response = jsonify(data)
+    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+    return response
 
 
 @app.post("/api/predict")
@@ -155,6 +181,7 @@ def predict():
 
     start_time_raw = (request.form.get("start_time") or "").strip()
     end_time_raw = (request.form.get("end_time") or "").strip()
+    model_id = (request.form.get("model_id") or "").strip() or None
     start_time, end_time, parse_error = _parse_time_range(start_time_raw, end_time_raw)
     if parse_error:
         return jsonify({"error": parse_error}), 400
@@ -165,7 +192,12 @@ def predict():
             tmp_path = Path(tmp_file.name)
             file.save(tmp_file.name)
 
-        prediction = service.predict_video(tmp_path, start_time=start_time, end_time=end_time)
+        prediction = service.predict_video(
+            tmp_path,
+            start_time=start_time,
+            end_time=end_time,
+            model_id=model_id,
+        )
         prediction["filename"] = filename
         return jsonify(prediction)
     except ValueError as exc:
@@ -213,6 +245,7 @@ def training_sample():
 
     predicted_move = request.form.get("predicted_move", "")
     predicted_confidence = request.form.get("predicted_confidence", "")
+    model_id = request.form.get("model_id", "")
     model_correct = str(request.form.get("model_correct", "")).lower() in {"1", "true", "yes", "on"}
 
     sample_id = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S") + "_" + uuid.uuid4().hex[:8]
@@ -248,6 +281,7 @@ def training_sample():
             "actual_move": actual_move,
             "predicted_move": predicted_move,
             "predicted_confidence": predicted_confidence,
+            "model_id": model_id,
             "model_correct": model_correct,
             "start_time": start_time,
             "end_time": end_time,

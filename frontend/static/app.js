@@ -7,6 +7,7 @@ const preview = document.getElementById("video-preview");
 const statusEl = document.getElementById("status");
 const moveEl = document.getElementById("predicted-move");
 const confidenceEl = document.getElementById("predicted-confidence");
+const predictedModelEl = document.getElementById("predicted-model");
 const framesEl = document.getElementById("detected-frames");
 const selectedSegmentEl = document.getElementById("selected-segment");
 const bestWindowEl = document.getElementById("best-window");
@@ -17,6 +18,18 @@ const startTimeInput = document.getElementById("start-time");
 const endTimeInput = document.getElementById("end-time");
 const setStartBtn = document.getElementById("set-start");
 const setEndBtn = document.getElementById("set-end");
+const modelSelect = document.getElementById("model-select");
+const refreshBenchmarkBtn = document.getElementById("refresh-benchmark");
+const benchmarkStatusEl = document.getElementById("benchmark-status");
+const benchmarkBestEl = document.getElementById("benchmark-best");
+const benchmarkTableEl = document.getElementById("benchmark-table");
+const liveVideo = document.getElementById("live-video");
+const startLiveBtn = document.getElementById("start-live");
+const stopLiveBtn = document.getElementById("stop-live");
+const liveStatusEl = document.getElementById("live-status");
+const liveMoveEl = document.getElementById("live-move");
+const liveConfidenceEl = document.getElementById("live-confidence");
+
 const trainingModal = document.getElementById("training-modal");
 const trainingPreview = document.getElementById("training-preview");
 const trainingStartInput = document.getElementById("training-start");
@@ -29,8 +42,12 @@ const cancelTrainingBtn = document.getElementById("cancel-training");
 const confirmTrainingBtn = document.getElementById("confirm-training");
 
 let availableMoves = [];
+let availableModels = [];
 let lastPrediction = null;
 let lastFile = null;
+let liveStream = null;
+let liveInterval = null;
+let liveBusy = false;
 
 function setStatus(text, isError = false) {
   statusEl.textContent = text;
@@ -39,6 +56,32 @@ function setStatus(text, isError = false) {
 
 function formatPercent(value) {
   return `${(value * 100).toFixed(2)}%`;
+}
+
+function formatPercentMaybe(value) {
+  const num = Number(value);
+  if (!Number.isFinite(num)) {
+    return "-";
+  }
+  return formatPercent(num);
+}
+
+function formatEpochs(row) {
+  const ran = Number(row.training_epochs_ran);
+  const target = Number(row.training_epochs_target);
+  const hasRan = Number.isFinite(ran);
+  const hasTarget = Number.isFinite(target) && target > 0;
+
+  if (hasRan && hasTarget) {
+    return `${ran}/${target}`;
+  }
+  if (hasRan) {
+    return `${ran}`;
+  }
+  if (hasTarget) {
+    return `${target}`;
+  }
+  return "-";
 }
 
 function formatSeconds(value) {
@@ -81,113 +124,22 @@ function setFile(file) {
   preview.load();
 }
 
-input.addEventListener("change", () => {
-  const [file] = input.files;
-  setFile(file);
-});
+function getSelectedModelId() {
+  return modelSelect.value || "";
+}
 
-setStartBtn.addEventListener("click", () => {
-  if (!Number.isFinite(preview.currentTime)) {
-    return;
-  }
-  startTimeInput.value = preview.currentTime.toFixed(2);
-});
-
-setEndBtn.addEventListener("click", () => {
-  if (!Number.isFinite(preview.currentTime)) {
-    return;
-  }
-  endTimeInput.value = preview.currentTime.toFixed(2);
-});
-
-["dragenter", "dragover"].forEach((eventName) => {
-  dropZone.addEventListener(eventName, (event) => {
-    event.preventDefault();
-    dropZone.classList.add("is-dragging");
+function populateModelSelect(models, defaultModelId) {
+  modelSelect.innerHTML = "";
+  models.forEach((row) => {
+    const option = document.createElement("option");
+    option.value = row.id;
+    option.textContent = `${row.id} (${row.architecture})`;
+    modelSelect.appendChild(option);
   });
-});
-
-["dragleave", "drop"].forEach((eventName) => {
-  dropZone.addEventListener(eventName, (event) => {
-    event.preventDefault();
-    dropZone.classList.remove("is-dragging");
-  });
-});
-
-dropZone.addEventListener("drop", (event) => {
-  const droppedFiles = event.dataTransfer?.files;
-  if (!droppedFiles || !droppedFiles.length) {
-    return;
+  if (defaultModelId && models.some((row) => row.id === defaultModelId)) {
+    modelSelect.value = defaultModelId;
   }
-  input.files = droppedFiles;
-  setFile(droppedFiles[0]);
-});
-
-form.addEventListener("submit", async (event) => {
-  event.preventDefault();
-  const [file] = input.files;
-  if (!file) {
-    setStatus("Pick a video file first.", true);
-    return;
-  }
-
-  const body = new FormData();
-  body.append("video", file);
-  const startRaw = startTimeInput.value.trim();
-  const endRaw = endTimeInput.value.trim();
-  const startValue = startRaw ? Number(startRaw) : null;
-  const endValue = endRaw ? Number(endRaw) : null;
-
-  if (startRaw && (!Number.isFinite(startValue) || startValue < 0)) {
-    setStatus("Start time must be a number >= 0.", true);
-    return;
-  }
-  if (endRaw && (!Number.isFinite(endValue) || endValue < 0)) {
-    setStatus("End time must be a number >= 0.", true);
-    return;
-  }
-  if (startValue !== null && endValue !== null && endValue <= startValue) {
-    setStatus("End time must be greater than start time.", true);
-    return;
-  }
-
-  if (startRaw) {
-    body.append("start_time", startRaw);
-  }
-  if (endRaw) {
-    body.append("end_time", endRaw);
-  }
-
-  submitBtn.disabled = true;
-  setStatus("Running inference...");
-
-  try {
-    const response = await fetch("/api/predict", {
-      method: "POST",
-      body,
-    });
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.error || "Request failed.");
-    }
-
-    moveEl.textContent = data.move;
-    confidenceEl.textContent = formatPercent(data.confidence);
-    framesEl.textContent = `${data.frames_with_landmarks}`;
-    selectedSegmentEl.textContent = `${formatSeconds(data.selected_segment?.start_sec)} - ${formatSeconds(data.selected_segment?.end_sec)}`;
-    bestWindowEl.textContent = `${formatSeconds(data.best_window?.start_sec)} - ${formatSeconds(data.best_window?.end_sec)}`;
-    windowsTestedEl.textContent = `${data.windows_evaluated ?? "-"}`;
-    renderProbabilities(data.probabilities || []);
-    setStatus(`Done. Model: ${data.model_path}`);
-    lastPrediction = data;
-    openTrainingModal(file, data, startValue, endValue);
-  } catch (error) {
-    setStatus(error.message || "Failed to predict.", true);
-  } finally {
-    submitBtn.disabled = false;
-  }
-});
+}
 
 function populateMoveSelect(moves, selectedMove) {
   actualMoveSelect.innerHTML = "";
@@ -243,6 +195,256 @@ function closeTrainingModal() {
   trainingPreview.pause();
 }
 
+async function sendPredictRequest(file, startRaw, endRaw, modelId) {
+  const body = new FormData();
+  if (file instanceof File) {
+    body.append("video", file);
+  } else {
+    body.append("video", file, "live_capture.webm");
+  }
+  if (startRaw) {
+    body.append("start_time", startRaw);
+  }
+  if (endRaw) {
+    body.append("end_time", endRaw);
+  }
+  if (modelId) {
+    body.append("model_id", modelId);
+  }
+
+  const response = await fetch("/api/predict", { method: "POST", body });
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.error || "Request failed.");
+  }
+  return data;
+}
+
+function renderBenchmarkTable(models) {
+  benchmarkTableEl.innerHTML = "";
+  const head = document.createElement("div");
+  head.className = "benchmark-row benchmark-head";
+  head.innerHTML = "<span>Model</span><span>Epochs</span><span>Accuracy</span><span>Macro F1</span><span>Best Val Acc</span>";
+  benchmarkTableEl.appendChild(head);
+
+  // Defensive dedupe by model_id in case old benchmark files contain duplicates.
+  const deduped = [];
+  const seen = new Set();
+  models.forEach((row) => {
+    const key = row.model_id || row.path || "";
+    if (seen.has(key)) {
+      return;
+    }
+    seen.add(key);
+    deduped.push(row);
+  });
+
+  deduped.forEach((row) => {
+    const item = document.createElement("div");
+    item.className = "benchmark-row";
+    item.innerHTML = `<span>${row.model_id}</span><span>${formatEpochs(row)}</span><span>${formatPercentMaybe(row.accuracy)}</span><span>${formatPercentMaybe(row.macro_f1)}</span><span>${formatPercentMaybe(row.best_val_accuracy)}</span>`;
+    benchmarkTableEl.appendChild(item);
+  });
+}
+
+async function loadBenchmark() {
+  benchmarkStatusEl.textContent = "Loading benchmark...";
+  try {
+    const response = await fetch("/api/model-benchmark", { cache: "no-store" });
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.error || "No benchmark found.");
+    }
+    benchmarkBestEl.textContent = data.best_model_id || "-";
+    renderBenchmarkTable(data.models || []);
+    benchmarkStatusEl.textContent = `Updated: ${data.generated_at_utc || "unknown"}`;
+  } catch (error) {
+    benchmarkBestEl.textContent = "-";
+    benchmarkTableEl.innerHTML = "";
+    benchmarkStatusEl.textContent = error.message || "Benchmark unavailable.";
+  }
+}
+
+function getRecorderOptions() {
+  const options = [
+    "video/webm;codecs=vp9",
+    "video/webm;codecs=vp8",
+    "video/webm",
+  ];
+  for (const mimeType of options) {
+    if (MediaRecorder.isTypeSupported(mimeType)) {
+      return { mimeType };
+    }
+  }
+  return {};
+}
+
+async function captureLiveChunk(durationMs) {
+  if (!liveStream) {
+    throw new Error("Live stream not active.");
+  }
+
+  return new Promise((resolve, reject) => {
+    let chunks = [];
+    let recorder;
+    try {
+      recorder = new MediaRecorder(liveStream, getRecorderOptions());
+    } catch (error) {
+      reject(new Error("MediaRecorder unsupported in this browser."));
+      return;
+    }
+    recorder.ondataavailable = (event) => {
+      if (event.data && event.data.size > 0) {
+        chunks.push(event.data);
+      }
+    };
+    recorder.onerror = () => reject(new Error("Failed to record live chunk."));
+    recorder.onstop = () => resolve(new Blob(chunks, { type: recorder.mimeType || "video/webm" }));
+    recorder.start();
+    window.setTimeout(() => recorder.stop(), durationMs);
+  });
+}
+
+async function runLivePredictCycle() {
+  if (liveBusy || !liveStream) {
+    return;
+  }
+  liveBusy = true;
+  try {
+    const blob = await captureLiveChunk(1600);
+    const modelId = getSelectedModelId();
+    const data = await sendPredictRequest(blob, "", "", modelId);
+    liveMoveEl.textContent = data.move;
+    liveConfidenceEl.textContent = formatPercent(data.confidence);
+    liveStatusEl.textContent = `Live detecting (${data.model_id})`;
+  } catch (error) {
+    liveStatusEl.textContent = error.message || "Live prediction failed.";
+  } finally {
+    liveBusy = false;
+  }
+}
+
+async function startLiveDetection() {
+  if (liveStream) {
+    return;
+  }
+  try {
+    liveStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+    liveVideo.srcObject = liveStream;
+    liveStatusEl.textContent = "Camera running...";
+    startLiveBtn.disabled = true;
+    stopLiveBtn.disabled = false;
+    await runLivePredictCycle();
+    liveInterval = window.setInterval(runLivePredictCycle, 2300);
+  } catch (error) {
+    liveStatusEl.textContent = "Could not access camera.";
+  }
+}
+
+function stopLiveDetection() {
+  if (liveInterval) {
+    window.clearInterval(liveInterval);
+    liveInterval = null;
+  }
+  if (liveStream) {
+    liveStream.getTracks().forEach((track) => track.stop());
+    liveStream = null;
+  }
+  liveVideo.srcObject = null;
+  startLiveBtn.disabled = false;
+  stopLiveBtn.disabled = true;
+  liveStatusEl.textContent = "Camera is off.";
+  liveMoveEl.textContent = "-";
+  liveConfidenceEl.textContent = "-";
+}
+
+input.addEventListener("change", () => {
+  const [file] = input.files;
+  setFile(file);
+});
+
+setStartBtn.addEventListener("click", () => {
+  if (Number.isFinite(preview.currentTime)) {
+    startTimeInput.value = preview.currentTime.toFixed(2);
+  }
+});
+
+setEndBtn.addEventListener("click", () => {
+  if (Number.isFinite(preview.currentTime)) {
+    endTimeInput.value = preview.currentTime.toFixed(2);
+  }
+});
+
+["dragenter", "dragover"].forEach((eventName) => {
+  dropZone.addEventListener(eventName, (event) => {
+    event.preventDefault();
+    dropZone.classList.add("is-dragging");
+  });
+});
+
+["dragleave", "drop"].forEach((eventName) => {
+  dropZone.addEventListener(eventName, (event) => {
+    event.preventDefault();
+    dropZone.classList.remove("is-dragging");
+  });
+});
+
+dropZone.addEventListener("drop", (event) => {
+  const droppedFiles = event.dataTransfer?.files;
+  if (!droppedFiles || !droppedFiles.length) {
+    return;
+  }
+  input.files = droppedFiles;
+  setFile(droppedFiles[0]);
+});
+
+form.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const [file] = input.files;
+  if (!file) {
+    setStatus("Pick a video file first.", true);
+    return;
+  }
+
+  const startRaw = startTimeInput.value.trim();
+  const endRaw = endTimeInput.value.trim();
+  const startValue = startRaw ? Number(startRaw) : null;
+  const endValue = endRaw ? Number(endRaw) : null;
+  if (startRaw && (!Number.isFinite(startValue) || startValue < 0)) {
+    setStatus("Start time must be a number >= 0.", true);
+    return;
+  }
+  if (endRaw && (!Number.isFinite(endValue) || endValue < 0)) {
+    setStatus("End time must be a number >= 0.", true);
+    return;
+  }
+  if (startValue !== null && endValue !== null && endValue <= startValue) {
+    setStatus("End time must be greater than start time.", true);
+    return;
+  }
+
+  submitBtn.disabled = true;
+  setStatus("Running inference...");
+  try {
+    const prediction = await sendPredictRequest(file, startRaw, endRaw, getSelectedModelId());
+    moveEl.textContent = prediction.move;
+    confidenceEl.textContent = formatPercent(prediction.confidence);
+    predictedModelEl.textContent = prediction.model_id || "-";
+    framesEl.textContent = `${prediction.frames_with_landmarks}`;
+    selectedSegmentEl.textContent = `${formatSeconds(prediction.selected_segment?.start_sec)} - ${formatSeconds(prediction.selected_segment?.end_sec)}`;
+    bestWindowEl.textContent = `${formatSeconds(prediction.best_window?.start_sec)} - ${formatSeconds(prediction.best_window?.end_sec)}`;
+    windowsTestedEl.textContent = `${prediction.windows_evaluated ?? "-"}`;
+    renderProbabilities(prediction.probabilities || []);
+    setStatus(`Done. Model: ${prediction.model_path}`);
+    lastPrediction = prediction;
+    openTrainingModal(file, prediction, startValue, endValue);
+  } catch (error) {
+    setStatus(error.message || "Failed to predict.", true);
+  } finally {
+    submitBtn.disabled = false;
+  }
+});
+
 actualMoveSelect.addEventListener("change", () => {
   if (!lastPrediction) {
     return;
@@ -286,14 +488,12 @@ confirmTrainingBtn.addEventListener("click", async () => {
   body.append("predicted_move", prediction.move);
   body.append("predicted_confidence", String(prediction.confidence ?? ""));
   body.append("model_correct", modelCorrectInput.checked ? "true" : "false");
+  body.append("model_id", prediction.model_id || "");
 
   confirmTrainingBtn.disabled = true;
   setStatus("Sending selected clip for training...");
   try {
-    const response = await fetch("/api/training-sample", {
-      method: "POST",
-      body,
-    });
+    const response = await fetch("/api/training-sample", { method: "POST", body });
     const data = await response.json();
     if (!response.ok) {
       throw new Error(data.error || "Failed to save training sample.");
@@ -311,6 +511,17 @@ confirmTrainingBtn.addEventListener("click", async () => {
   }
 });
 
+refreshBenchmarkBtn.addEventListener("click", () => {
+  loadBenchmark();
+});
+
+startLiveBtn.addEventListener("click", () => {
+  startLiveDetection();
+});
+
+stopLiveBtn.addEventListener("click", () => {
+  stopLiveDetection();
+});
 
 async function loadMoves() {
   try {
@@ -328,9 +539,26 @@ async function loadMoves() {
       chip.textContent = move;
       chipsEl.appendChild(chip);
     });
-  } catch (error) {
-    // Non-blocking if metadata endpoint is unavailable.
+  } catch (_error) {
+    // Non-blocking metadata load.
   }
 }
 
+async function loadModels() {
+  try {
+    const response = await fetch("/api/models");
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.error || "Failed to load models.");
+    }
+    availableModels = data.models || [];
+    populateModelSelect(availableModels, data.default_model_id);
+  } catch (_error) {
+    modelSelect.innerHTML = "<option value=''>No models</option>";
+  }
+}
+
+stopLiveBtn.disabled = true;
+loadModels();
 loadMoves();
+loadBenchmark();

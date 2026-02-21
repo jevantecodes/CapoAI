@@ -38,8 +38,13 @@ MODEL_CANDIDATES = [
 MODEL_PATH = next((p for p in MODEL_CANDIDATES if os.path.exists(p)), MODEL_CANDIDATES[0])
 model = load_model(MODEL_PATH)
 
+model_id = os.path.splitext(os.path.basename(MODEL_PATH))[0]
+MODEL_LABEL_PATH = os.path.join("models", f"{model_id}_labels.json")
 LABEL_MAP_PATH = "dataset/label_map.json"
-if os.path.exists(LABEL_MAP_PATH):
+if os.path.exists(MODEL_LABEL_PATH):
+    with open(MODEL_LABEL_PATH, "r", encoding="utf-8") as f:
+        MOVES = json.load(f)
+elif os.path.exists(LABEL_MAP_PATH):
     with open(LABEL_MAP_PATH, "r", encoding="utf-8") as f:
         MOVES = json.load(f)
 else:

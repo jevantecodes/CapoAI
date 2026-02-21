@@ -1,0 +1,50 @@
+{
+  "arch": "conv1d",
+  "run_tag": "exp1",
+  "run_dir": "models/runs/conv1d_exp1",
+  "epochs": 120,
+  "batch_size": 8,
+  "seed": 42,
+  "val_ratio": 0.25,
+  "learning_rate": 0.0003,
+  "label_smoothing": 0.05,
+  "class_weights_enabled": true,
+  "initial_samples": 321,
+  "initial_label_count": 13,
+  "train_samples": 237,
+  "val_samples": 79,
+  "final_label_count": 12,
+  "labels_path": "models/capoeira_conv1d_labels.json",
+  "min_class_samples": 12,
+  "dropped_labels": [
+    "mini_au"
+  ],
+  "kept_labels": [
+    "armada",
+    "au",
+    "au_sem_maos",
+    "cocorinha",
+    "esquiva_atras",
+    "esquiva_baixa",
+    "esquiva_lateral",
+    "ginga",
+    "meia_lua_de_compasso",
+    "meia_lua_de_frente",
+    "negativa",
+    "queixada"
+  ],
+  "kept_counts": {
+    "armada": 29,
+    "au": 23,
+    "au_sem_maos": 33,
+    "cocorinha": 28,
+    "esquiva_atras": 33,
+    "esquiva_baixa": 35,
+    "esquiva_lateral": 17,
+    "ginga": 21,
+    "meia_lua_de_compasso": 22,
+    "meia_lua_de_frente": 25,
+    "negativa": 19,
+    "queixada": 31
+  }
+}

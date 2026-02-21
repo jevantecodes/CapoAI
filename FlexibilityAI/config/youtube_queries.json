@@ -1,0 +1,20 @@
+{
+  "movement_queries": {
+    "deep_squat": [
+      "deep squat mobility drill",
+      "bodyweight deep squat full depth"
+    ],
+    "forward_fold": [
+      "standing forward fold flexibility",
+      "hamstring forward fold stretch"
+    ],
+    "lunge_stretch": [
+      "hip flexor lunge stretch form",
+      "deep lunge stretch mobility"
+    ],
+    "bridge": [
+      "glute bridge exercise form",
+      "bridge mobility drill"
+    ]
+  }
+}

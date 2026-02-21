@@ -10,6 +10,35 @@
   <div class="bg-shape shape-a"></div>
   <div class="bg-shape shape-b"></div>
 
+  <header class="topbar">
+    <button id="menu-toggle" class="hamburger-btn" type="button" aria-label="Open menu" aria-controls="menu-drawer" aria-expanded="false">☰</button>
+    <div class="topbar-brand">
+      <strong>CapoAI</strong>
+      <span id="current-view" class="topbar-view">Dashboard</span>
+    </div>
+    <button id="top-login-btn" type="button" class="ghost-btn">Login</button>
+  </header>
+
+  <div id="drawer-backdrop" class="drawer-backdrop hidden"></div>
+  <aside id="menu-drawer" class="drawer hidden" aria-hidden="true">
+    <div class="drawer-head">
+      <strong>Hamburger Menu</strong>
+      <button id="drawer-close" type="button" class="ghost-btn">Close</button>
+    </div>
+    <nav class="drawer-nav">
+      <button type="button" class="drawer-link is-active" data-view-target="dashboard">Dashboard</button>
+      <button type="button" class="drawer-link" data-view-target="live">Live Detection</button>
+      <button type="button" class="drawer-link" data-view-target="model-lab">Model Lab</button>
+      <button type="button" class="drawer-link" data-view-target="flexibility">FlexibilityAI</button>
+      <button type="button" class="drawer-link" data-view-target="about">About CapoAI</button>
+      <button type="button" class="drawer-link" data-view-target="login">Login</button>
+      <button type="button" class="drawer-link" data-view-target="account">Account</button>
+    </nav>
+    <p class="drawer-note">
+      Explore CapoAI modules, FlexibilityAI coaching, and roadmap direction.
+    </p>
+  </aside>
+
   <main class="page">
     <section class="hero">
       <p class="eyebrow">Computer Vision</p>
@@ -20,86 +49,81 @@
       <div id="move-chips" class="chips" aria-live="polite"></div>
     </section>
 
-    <section class="panel">
-      <form id="predict-form" class="uploader">
-        <label for="video-input" id="drop-zone" class="drop-zone">
-          <span class="drop-zone-title">Drop video here or click to browse</span>
-          <span class="drop-zone-hint">Accepted: .mp4, .mov, .avi, .mkv, .webm</span>
-        </label>
-        <input id="video-input" name="video" type="file" accept="video/*" required>
-        <div class="actions">
-          <span id="file-name" class="file-name">No video selected</span>
-          <button id="submit-btn" type="submit">Analyze Move</button>
-        </div>
-        <div class="actions">
-          <label for="model-select" class="file-name">Model</label>
-          <select id="model-select" class="select-input"></select>
-          <button id="refresh-benchmark" type="button" class="ghost-btn">Refresh Model Analysis</button>
-        </div>
-        <div class="segment-controls">
-          <div class="segment-field">
-            <label for="start-time">Start (sec)</label>
-            <input id="start-time" type="number" min="0" step="0.1" placeholder="0.0">
-            <button id="set-start" type="button" class="ghost-btn">Use current frame</button>
+    <section id="view-dashboard" class="view-section is-active" data-view="dashboard">
+      <section class="panel">
+        <form id="predict-form" class="uploader">
+          <label for="video-input" id="drop-zone" class="drop-zone">
+            <span class="drop-zone-title">Drop video here or click to browse</span>
+            <span class="drop-zone-hint">Accepted: .mp4, .mov, .avi, .mkv, .webm</span>
+          </label>
+          <input id="video-input" name="video" type="file" accept="video/*" required>
+          <div class="actions">
+            <span id="file-name" class="file-name">No video selected</span>
+            <button id="submit-btn" type="submit">Analyze Move</button>
           </div>
-          <div class="segment-field">
-            <label for="end-time">End (sec)</label>
-            <input id="end-time" type="number" min="0" step="0.1" placeholder="leave blank = full clip">
-            <button id="set-end" type="button" class="ghost-btn">Use current frame</button>
+          <div class="actions">
+            <label for="model-select" class="file-name">Model</label>
+            <select id="model-select" class="select-input"></select>
+            <button id="refresh-benchmark" type="button" class="ghost-btn">Refresh Model Analysis</button>
           </div>
-        </div>
-      </form>
+          <div class="segment-controls">
+            <div class="segment-field">
+              <label for="start-time">Start (sec)</label>
+              <input id="start-time" type="number" min="0" step="0.1" placeholder="0.0">
+              <button id="set-start" type="button" class="ghost-btn">Use current frame</button>
+            </div>
+            <div class="segment-field">
+              <label for="end-time">End (sec)</label>
+              <input id="end-time" type="number" min="0" step="0.1" placeholder="leave blank = full clip">
+              <button id="set-end" type="button" class="ghost-btn">Use current frame</button>
+            </div>
+          </div>
+        </form>
 
-      <div class="preview-grid">
-        <article class="card">
-          <h2>Preview</h2>
-          <video id="video-preview" controls muted playsinline></video>
-        </article>
-        <article class="card">
-          <h2>Prediction</h2>
-          <p id="status" class="status">Waiting for upload...</p>
-          <div class="result-row">
-            <span>Top Move</span>
-            <strong id="predicted-move">-</strong>
-          </div>
-          <div class="result-row">
-            <span>Confidence</span>
-            <strong id="predicted-confidence">-</strong>
-          </div>
-          <div class="result-row">
-            <span>Model Used</span>
-            <strong id="predicted-model">-</strong>
-          </div>
-          <div class="result-row">
-            <span>Detected Frames</span>
-            <strong id="detected-frames">-</strong>
-          </div>
-          <div class="result-row">
-            <span>Selected Segment</span>
-            <strong id="selected-segment">-</strong>
-          </div>
-          <div class="result-row">
-            <span>Best Window</span>
-            <strong id="best-window">-</strong>
-          </div>
-          <div class="result-row">
-            <span>Windows Tested</span>
-            <strong id="windows-tested">-</strong>
-          </div>
-          <div id="probabilities" class="bars"></div>
-        </article>
-      </div>
+        <div class="preview-grid">
+          <article class="card">
+            <h2>Preview</h2>
+            <video id="video-preview" controls muted playsinline></video>
+          </article>
+          <article class="card">
+            <h2>Prediction</h2>
+            <p id="status" class="status">Waiting for upload...</p>
+            <div class="result-row">
+              <span>Top Move</span>
+              <strong id="predicted-move">-</strong>
+            </div>
+            <div class="result-row">
+              <span>Confidence</span>
+              <strong id="predicted-confidence">-</strong>
+            </div>
+            <div class="result-row">
+              <span>Model Used</span>
+              <strong id="predicted-model">-</strong>
+            </div>
+            <div class="result-row">
+              <span>Detected Frames</span>
+              <strong id="detected-frames">-</strong>
+            </div>
+            <div class="result-row">
+              <span>Selected Segment</span>
+              <strong id="selected-segment">-</strong>
+            </div>
+            <div class="result-row">
+              <span>Best Window</span>
+              <strong id="best-window">-</strong>
+            </div>
+            <div class="result-row">
+              <span>Windows Tested</span>
+              <strong id="windows-tested">-</strong>
+            </div>
+            <div id="probabilities" class="bars"></div>
+          </article>
+        </div>
+      </section>
+    </section>
 
-      <div class="analytics-grid">
-        <article class="card">
-          <h2>Model Analysis</h2>
-          <p id="benchmark-status" class="status">No benchmark loaded.</p>
-          <div class="result-row">
-            <span>Best Model</span>
-            <strong id="benchmark-best">-</strong>
-          </div>
-          <div id="benchmark-table" class="benchmark-table"></div>
-        </article>
+    <section id="view-live" class="view-section" data-view="live">
+      <section class="panel">
         <article class="card">
           <h2>Live Stream</h2>
           <p id="live-status" class="status">Camera is off.</p>
@@ -117,7 +141,184 @@
             <strong id="live-confidence">-</strong>
           </div>
         </article>
-      </div>
+      </section>
+    </section>
+
+    <section id="view-model-lab" class="view-section" data-view="model-lab">
+      <section class="panel">
+        <article class="card">
+          <h2>Model Analysis</h2>
+          <p id="benchmark-status" class="status">No benchmark loaded.</p>
+          <div class="result-row">
+            <span>Best Model</span>
+            <strong id="benchmark-best">-</strong>
+          </div>
+          <div id="benchmark-table" class="benchmark-table"></div>
+        </article>
+      </section>
+    </section>
+
+    <section id="view-flexibility" class="view-section" data-view="flexibility">
+      <section class="panel">
+        <form id="flex-form" class="uploader">
+          <label for="flex-video-input" id="flex-drop-zone" class="drop-zone">
+            <span class="drop-zone-title">Drop flexibility video here or click to browse</span>
+            <span class="drop-zone-hint">Accepted: .mp4, .mov, .avi, .mkv, .webm</span>
+          </label>
+          <input id="flex-video-input" name="video" type="file" accept="video/*" required>
+          <div class="actions">
+            <span id="flex-file-name" class="file-name">No flexibility video selected</span>
+            <button id="flex-analyze-btn" type="submit">Analyze Flexibility</button>
+          </div>
+          <div class="actions">
+            <label for="flex-goal-select" class="file-name">Goal</label>
+            <select id="flex-goal-select" class="select-input"></select>
+            <button id="flex-analyze-goal-btn" type="button">Analyze Goal Readiness</button>
+          </div>
+          <div class="segment-controls">
+            <div class="segment-field">
+              <label for="flex-athlete-id">Athlete ID (optional)</label>
+              <input id="flex-athlete-id" type="number" min="1" step="1" placeholder="e.g. 1">
+            </div>
+            <div class="segment-field">
+              <label for="flex-known-scores">Known Scores JSON (optional)</label>
+              <input id="flex-known-scores" type="text" placeholder='{"bridge":72,"lunge_stretch":68}'>
+            </div>
+          </div>
+        </form>
+
+        <div class="preview-grid">
+          <article class="card">
+            <h2>Flexibility Preview</h2>
+            <video id="flex-video-preview" controls muted playsinline></video>
+          </article>
+          <article class="card">
+            <h2>Flexibility Results</h2>
+            <p id="flex-status" class="status">Waiting for flexibility upload...</p>
+            <div class="result-row">
+              <span>Predicted Movement</span>
+              <strong id="flex-predicted-move">-</strong>
+            </div>
+            <div class="result-row">
+              <span>Quality Score</span>
+              <strong id="flex-quality">-</strong>
+            </div>
+            <div class="result-row">
+              <span>Poorness Score</span>
+              <strong id="flex-poorness">-</strong>
+            </div>
+            <div class="result-row">
+              <span>Readiness Score</span>
+              <strong id="flex-readiness">-</strong>
+            </div>
+            <div class="result-row">
+              <span>Saved Session ID</span>
+              <strong id="flex-session-id">-</strong>
+            </div>
+            <pre id="flex-json" class="status">No result yet.</pre>
+          </article>
+        </div>
+
+        <article class="card" style="margin-top: 14px;">
+          <h2>FlexibilityAI Features</h2>
+          <div class="phase-grid">
+            <div class="phase-item">
+              <h3>Movement Detection + Quality</h3>
+              <p>Scores deep squat, forward fold, lunge stretch, and bridge against good-form templates.</p>
+            </div>
+            <div class="phase-item">
+              <h3>Goal Readiness</h3>
+              <p>Tracks progress toward macaco, macaquinho, and au with weighted movement targets.</p>
+            </div>
+            <div class="phase-item">
+              <h3>Athlete Analytics</h3>
+              <p>Stores athlete sessions and trend improvements for admin monitoring.</p>
+            </div>
+            <div class="phase-item">
+              <h3>AI Coaching Response</h3>
+              <p>Generates coaching guidance from athlete analytics and readiness gaps.</p>
+            </div>
+          </div>
+        </article>
+      </section>
+    </section>
+
+    <section id="view-about" class="view-section" data-view="about">
+      <section class="panel">
+        <article class="card">
+          <h2>About CapoAI</h2>
+          <p class="status">CapoAI is an AI-assisted training platform for movement analysis, mobility progress, and coaching support.</p>
+          <div class="phase-grid">
+            <div class="phase-item">
+              <h3>Current Features</h3>
+              <p>Video move classification, live detection, model lab benchmarking, and FlexibilityAI quality/readiness scoring.</p>
+            </div>
+            <div class="phase-item">
+              <h3>Data + Admin Features</h3>
+              <p>Athlete profiles, session history, trend analytics, and AI-generated coaching responses based on analytics.</p>
+            </div>
+            <div class="phase-item">
+              <h3>Future Features</h3>
+              <p>DEXA-informed assessments, personalized training blocks, and deeper movement correction feedback loops.</p>
+            </div>
+            <div class="phase-item">
+              <h3>Platform Direction</h3>
+              <p>Unified athlete timeline across capoeira skills, flexibility, recovery, and coach-driven progression plans.</p>
+            </div>
+          </div>
+        </article>
+      </section>
+    </section>
+
+    <section id="view-login" class="view-section" data-view="login">
+      <section class="panel">
+        <article class="card">
+          <h2>Login</h2>
+          <form id="login-form" class="login-form">
+            <div class="segment-field">
+              <label for="login-email">Email</label>
+              <input id="login-email" type="email" placeholder="you@example.com" required>
+            </div>
+            <div class="segment-field">
+              <label for="login-password">Password</label>
+              <input id="login-password" type="password" placeholder="Enter password" required>
+            </div>
+            <div class="actions">
+              <button type="submit">Login</button>
+              <button type="button" class="ghost-btn">Login with Google</button>
+              <button type="button" class="ghost-btn">Login with Apple</button>
+            </div>
+          </form>
+          <p id="login-status" class="status">Not signed in.</p>
+        </article>
+      </section>
+    </section>
+
+    <section id="view-account" class="view-section" data-view="account">
+      <section class="panel">
+        <article class="card">
+          <h2>Account &amp; Preferences</h2>
+          <p class="status">Manage profile and training preferences.</p>
+          <div class="phase-grid">
+            <div class="phase-item">
+              <h3>Profile</h3>
+              <p>Name, capoeira level, dominant side, and training goals.</p>
+            </div>
+            <div class="phase-item">
+              <h3>Training Preferences</h3>
+              <p>Preferred moves, model defaults, and clip length presets.</p>
+            </div>
+            <div class="phase-item">
+              <h3>Notifications</h3>
+              <p>Weekly progress reminders and retraining completion alerts.</p>
+            </div>
+            <div class="phase-item">
+              <h3>Privacy</h3>
+              <p>Control if uploaded clips can be used for future model training.</p>
+            </div>
+          </div>
+        </article>
+      </section>
     </section>
   </main>
 

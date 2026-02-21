@@ -1,0 +1,32 @@
+{
+  "goals": {
+    "macaquinho": {
+      "ready_threshold": 80,
+      "guidance": "Build hip extension and shoulder comfort first; prioritize smooth kick-over mechanics.",
+      "prerequisites": {
+        "bridge": {"required_score": 75, "weight": 0.4},
+        "lunge_stretch": {"required_score": 70, "weight": 0.35},
+        "forward_fold": {"required_score": 65, "weight": 0.25}
+      }
+    },
+    "macaco": {
+      "ready_threshold": 85,
+      "guidance": "You need stronger posterior-chain extension and shoulder opening before high-speed entries.",
+      "prerequisites": {
+        "bridge": {"required_score": 85, "weight": 0.45},
+        "lunge_stretch": {"required_score": 78, "weight": 0.3},
+        "forward_fold": {"required_score": 70, "weight": 0.15},
+        "deep_squat": {"required_score": 72, "weight": 0.1}
+      }
+    },
+    "au": {
+      "ready_threshold": 82,
+      "guidance": "Prioritize hamstring length and split-lunge control for cleaner leg lines and safer landings.",
+      "prerequisites": {
+        "lunge_stretch": {"required_score": 80, "weight": 0.4},
+        "forward_fold": {"required_score": 78, "weight": 0.35},
+        "deep_squat": {"required_score": 68, "weight": 0.25}
+      }
+    }
+  }
+}

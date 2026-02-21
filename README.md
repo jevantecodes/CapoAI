@@ -38,3 +38,9 @@ python -m backend.app
 
 Open:
 - `http://127.0.0.1:5000`
+
+## FlexibilityAI (Flexibility Prototype)
+A new sub-app is available at:
+- `/Users/jevanteqaiyim/Desktop/CapoAI/FlexibilityAI`
+
+It supports 4 starter movements (`deep_squat`, `forward_fold`, `lunge_stretch`, `bridge`), movement detection, a 0-100 quality score vs good-example templates, YouTube template bootstrapping, readiness feedback for goals like `macaco`, `macaquinho`, and `au`, admin athlete data management, and GPT-style coaching responses from analytics.

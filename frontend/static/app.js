@@ -29,6 +29,33 @@ const stopLiveBtn = document.getElementById("stop-live");
 const liveStatusEl = document.getElementById("live-status");
 const liveMoveEl = document.getElementById("live-move");
 const liveConfidenceEl = document.getElementById("live-confidence");
+const menuToggleBtn = document.getElementById("menu-toggle");
+const drawerCloseBtn = document.getElementById("drawer-close");
+const drawerBackdrop = document.getElementById("drawer-backdrop");
+const drawer = document.getElementById("menu-drawer");
+const topLoginBtn = document.getElementById("top-login-btn");
+const currentViewEl = document.getElementById("current-view");
+const navLinks = document.querySelectorAll("[data-view-target]");
+const viewSections = document.querySelectorAll(".view-section");
+const loginForm = document.getElementById("login-form");
+const loginStatusEl = document.getElementById("login-status");
+const loginEmailInput = document.getElementById("login-email");
+const flexForm = document.getElementById("flex-form");
+const flexVideoInput = document.getElementById("flex-video-input");
+const flexDropZone = document.getElementById("flex-drop-zone");
+const flexFileNameEl = document.getElementById("flex-file-name");
+const flexAnalyzeGoalBtn = document.getElementById("flex-analyze-goal-btn");
+const flexGoalSelect = document.getElementById("flex-goal-select");
+const flexAthleteIdInput = document.getElementById("flex-athlete-id");
+const flexKnownScoresInput = document.getElementById("flex-known-scores");
+const flexPreview = document.getElementById("flex-video-preview");
+const flexStatusEl = document.getElementById("flex-status");
+const flexPredictedMoveEl = document.getElementById("flex-predicted-move");
+const flexQualityEl = document.getElementById("flex-quality");
+const flexPoornessEl = document.getElementById("flex-poorness");
+const flexReadinessEl = document.getElementById("flex-readiness");
+const flexSessionIdEl = document.getElementById("flex-session-id");
+const flexJsonEl = document.getElementById("flex-json");
 
 const trainingModal = document.getElementById("training-modal");
 const trainingPreview = document.getElementById("training-preview");
@@ -48,10 +75,53 @@ let lastFile = null;
 let liveStream = null;
 let liveInterval = null;
 let liveBusy = false;
+let flexLastFile = null;
+
+const VIEW_LABELS = {
+  dashboard: "Dashboard",
+  live: "Live Detection",
+  "model-lab": "Model Lab",
+  flexibility: "FlexibilityAI",
+  about: "About CapoAI",
+  login: "Login",
+  account: "Account",
+};
 
 function setStatus(text, isError = false) {
   statusEl.textContent = text;
   statusEl.style.color = isError ? "#9f2f16" : "";
+}
+
+function openDrawer() {
+  drawer.classList.remove("hidden");
+  drawerBackdrop.classList.remove("hidden");
+  menuToggleBtn.setAttribute("aria-expanded", "true");
+  drawer.setAttribute("aria-hidden", "false");
+}
+
+function closeDrawer() {
+  drawer.classList.add("hidden");
+  drawerBackdrop.classList.add("hidden");
+  menuToggleBtn.setAttribute("aria-expanded", "false");
+  drawer.setAttribute("aria-hidden", "true");
+}
+
+function setActiveNav(viewId) {
+  navLinks.forEach((link) => {
+    link.classList.toggle("is-active", link.dataset.viewTarget === viewId);
+  });
+}
+
+function switchView(viewId) {
+  viewSections.forEach((section) => {
+    section.classList.toggle("is-active", section.dataset.view === viewId);
+  });
+  setActiveNav(viewId);
+  currentViewEl.textContent = VIEW_LABELS[viewId] || "Dashboard";
+  closeDrawer();
+  if (viewId !== "live" && liveStream) {
+    stopLiveDetection();
+  }
 }
 
 function formatPercent(value) {
@@ -122,6 +192,129 @@ function setFile(file) {
   const url = URL.createObjectURL(file);
   preview.src = url;
   preview.load();
+}
+
+function setFlexStatus(text, isError = false) {
+  if (!flexStatusEl) {
+    return;
+  }
+  flexStatusEl.textContent = text;
+  flexStatusEl.style.color = isError ? "#9f2f16" : "";
+}
+
+function setFlexFile(file) {
+  if (!file || !flexFileNameEl || !flexPreview) {
+    return;
+  }
+  flexLastFile = file;
+  flexFileNameEl.textContent = file.name;
+  const url = URL.createObjectURL(file);
+  flexPreview.src = url;
+  flexPreview.load();
+}
+
+function resetFlexResultView() {
+  if (!flexPredictedMoveEl) {
+    return;
+  }
+  flexPredictedMoveEl.textContent = "-";
+  flexQualityEl.textContent = "-";
+  flexPoornessEl.textContent = "-";
+  flexReadinessEl.textContent = "-";
+  flexSessionIdEl.textContent = "-";
+  flexJsonEl.textContent = "No result yet.";
+}
+
+function populateFlexGoals(goals) {
+  if (!flexGoalSelect) {
+    return;
+  }
+  flexGoalSelect.innerHTML = "";
+  goals.forEach((goal) => {
+    const option = document.createElement("option");
+    option.value = goal;
+    option.textContent = goal;
+    flexGoalSelect.appendChild(option);
+  });
+}
+
+async function loadFlexMeta() {
+  if (!flexGoalSelect) {
+    return;
+  }
+
+  try {
+    const response = await fetch("/api/flex/health", { cache: "no-store" });
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.error || "FlexibilityAI metadata unavailable.");
+    }
+    populateFlexGoals(data.goals || []);
+    setFlexStatus("FlexibilityAI ready.");
+  } catch (error) {
+    populateFlexGoals([]);
+    setFlexStatus(error.message || "FlexibilityAI unavailable.", true);
+  }
+}
+
+function renderFlexResult(result, includeGoal) {
+  flexPredictedMoveEl.textContent = result.predicted_movement || "-";
+  flexQualityEl.textContent = Number.isFinite(Number(result.quality_score))
+    ? `${Number(result.quality_score).toFixed(2)}`
+    : "-";
+  flexPoornessEl.textContent = Number.isFinite(Number(result.poorness_score))
+    ? `${Number(result.poorness_score).toFixed(2)}`
+    : "-";
+
+  const readiness = result.goal_feedback?.readiness_score;
+  flexReadinessEl.textContent = Number.isFinite(Number(readiness))
+    ? `${Number(readiness).toFixed(2)}`
+    : "-";
+  flexSessionIdEl.textContent = result.session_record_id || "-";
+  flexJsonEl.textContent = JSON.stringify(result, null, 2);
+  setFlexStatus(includeGoal ? "Goal readiness completed." : "Flexibility analysis completed.");
+}
+
+async function runFlexAnalyze(includeGoal) {
+  if (!flexLastFile) {
+    setFlexStatus("Please upload a flexibility video first.", true);
+    return;
+  }
+
+  const body = new FormData();
+  body.append("video", flexLastFile);
+
+  const athleteIdRaw = (flexAthleteIdInput?.value || "").trim();
+  if (athleteIdRaw) {
+    body.append("athlete_id", athleteIdRaw);
+  }
+
+  if (includeGoal) {
+    const goal = (flexGoalSelect?.value || "").trim();
+    if (!goal) {
+      setFlexStatus("Choose a goal for readiness analysis.", true);
+      return;
+    }
+    body.append("goal", goal);
+    const knownScores = (flexKnownScoresInput?.value || "").trim();
+    if (knownScores) {
+      body.append("known_scores", knownScores);
+    }
+  }
+
+  setFlexStatus(includeGoal ? "Running flexibility goal analysis..." : "Running flexibility analysis...");
+
+  try {
+    const endpoint = includeGoal ? "/api/flex/analyze-goal" : "/api/flex/analyze";
+    const response = await fetch(endpoint, { method: "POST", body });
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.error || "Flexibility analysis failed.");
+    }
+    renderFlexResult(data, includeGoal);
+  } catch (error) {
+    setFlexStatus(error.message || "Flexibility analysis failed.", true);
+  }
 }
 
 function getSelectedModelId() {
@@ -398,6 +591,51 @@ dropZone.addEventListener("drop", (event) => {
   setFile(droppedFiles[0]);
 });
 
+if (flexVideoInput) {
+  flexVideoInput.addEventListener("change", () => {
+    const [file] = flexVideoInput.files || [];
+    setFlexFile(file);
+  });
+}
+
+if (flexDropZone && flexVideoInput) {
+  ["dragenter", "dragover"].forEach((eventName) => {
+    flexDropZone.addEventListener(eventName, (event) => {
+      event.preventDefault();
+      flexDropZone.classList.add("is-dragging");
+    });
+  });
+
+  ["dragleave", "drop"].forEach((eventName) => {
+    flexDropZone.addEventListener(eventName, (event) => {
+      event.preventDefault();
+      flexDropZone.classList.remove("is-dragging");
+    });
+  });
+
+  flexDropZone.addEventListener("drop", (event) => {
+    const droppedFiles = event.dataTransfer?.files;
+    if (!droppedFiles || !droppedFiles.length) {
+      return;
+    }
+    flexVideoInput.files = droppedFiles;
+    setFlexFile(droppedFiles[0]);
+  });
+}
+
+if (flexForm) {
+  flexForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    await runFlexAnalyze(false);
+  });
+}
+
+if (flexAnalyzeGoalBtn) {
+  flexAnalyzeGoalBtn.addEventListener("click", async () => {
+    await runFlexAnalyze(true);
+  });
+}
+
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
   const [file] = input.files;
@@ -523,6 +761,45 @@ stopLiveBtn.addEventListener("click", () => {
   stopLiveDetection();
 });
 
+menuToggleBtn.addEventListener("click", () => {
+  openDrawer();
+});
+
+drawerCloseBtn.addEventListener("click", () => {
+  closeDrawer();
+});
+
+drawerBackdrop.addEventListener("click", () => {
+  closeDrawer();
+});
+
+window.addEventListener("keydown", (event) => {
+  if (event.key === "Escape") {
+    closeDrawer();
+  }
+});
+
+topLoginBtn.addEventListener("click", () => {
+  switchView("login");
+});
+
+navLinks.forEach((link) => {
+  link.addEventListener("click", () => {
+    switchView(link.dataset.viewTarget || "dashboard");
+  });
+});
+
+loginForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  const email = (loginEmailInput.value || "").trim();
+  if (!email) {
+    loginStatusEl.textContent = "Enter a valid email.";
+    return;
+  }
+  loginStatusEl.textContent = `Signed in as ${email} (demo mode)`;
+  switchView("dashboard");
+});
+
 async function loadMoves() {
   try {
     const response = await fetch("/api/moves");
@@ -562,3 +839,5 @@ stopLiveBtn.disabled = true;
 loadModels();
 loadMoves();
 loadBenchmark();
+resetFlexResultView();
+loadFlexMeta();

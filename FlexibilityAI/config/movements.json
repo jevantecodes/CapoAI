@@ -1,0 +1,73 @@
+{
+  "movements": {
+    "deep_squat": {
+      "description": "Deep bodyweight squat emphasizing hip and ankle mobility.",
+      "focus_features": [
+        "left_knee_angle",
+        "right_knee_angle",
+        "left_hip_angle",
+        "right_hip_angle",
+        "torso_tilt_deg"
+      ],
+      "similarity_scale": 20.0,
+      "posture_tolerance": 18.0,
+      "score_weights": {
+        "similarity": 0.65,
+        "rom": 0.2,
+        "posture": 0.15
+      }
+    },
+    "forward_fold": {
+      "description": "Standing forward fold targeting hamstring and posterior-chain mobility.",
+      "focus_features": [
+        "left_hip_angle",
+        "right_hip_angle",
+        "torso_tilt_deg",
+        "left_wrist_to_ankle_norm",
+        "right_wrist_to_ankle_norm"
+      ],
+      "similarity_scale": 16.0,
+      "posture_tolerance": 16.0,
+      "score_weights": {
+        "similarity": 0.65,
+        "rom": 0.2,
+        "posture": 0.15
+      }
+    },
+    "lunge_stretch": {
+      "description": "Hip-flexor lunge stretch with front-knee and back-hip control.",
+      "focus_features": [
+        "left_knee_angle",
+        "right_knee_angle",
+        "left_hip_angle",
+        "right_hip_angle",
+        "hip_drop_norm"
+      ],
+      "similarity_scale": 18.0,
+      "posture_tolerance": 20.0,
+      "score_weights": {
+        "similarity": 0.65,
+        "rom": 0.2,
+        "posture": 0.15
+      }
+    },
+    "bridge": {
+      "description": "Glute bridge emphasizing hip extension and trunk alignment.",
+      "focus_features": [
+        "left_hip_angle",
+        "right_hip_angle",
+        "left_knee_angle",
+        "right_knee_angle",
+        "hip_drop_norm",
+        "torso_tilt_deg"
+      ],
+      "similarity_scale": 16.0,
+      "posture_tolerance": 14.0,
+      "score_weights": {
+        "similarity": 0.65,
+        "rom": 0.2,
+        "posture": 0.15
+      }
+    }
+  }
+}

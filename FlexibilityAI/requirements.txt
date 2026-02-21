@@ -1,0 +1,6 @@
+flask==3.1.2
+numpy>=1.26,<2
+opencv-python==4.11.0.86
+mediapipe==0.10.21
+yt-dlp>=2024.8.6
+openai>=1.40.0
